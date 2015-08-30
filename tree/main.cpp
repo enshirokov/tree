@@ -57,18 +57,18 @@ Node* find(int pos, Node *node)
 int update(int branch, int num, Node *node)
 {
 
-    //node->left = num;
+    node->left = num;
     //node->level = node->parent->level + 1;
 
 
     if(!node->children.empty() && branch < node->children.size()){
         for (int i = branch; i < node->children.size(); i++) {
-            int forOther = (i == 0) ? (node->left + 1) : node->children[i - 1]->right;
+            int forOther = (i == 0) ? (node->left + 1) : node->children[i - 1]->right + 1;
             node->right = update(0, forOther, node->children[i]);
         }
     }
     else
-        node->right = num + 1;
+        node->right = node->left + 1;
 
     return node->right + 1;
 }
@@ -91,9 +91,10 @@ void insert(int pos, Node *node, Node *parent)
 
     node->parent = p;
 
+
     if(pos == p->left){
         p->children.push_back(node);
-        p->right = update(p->children.size() - 1, p->left, p);
+        update(0, p->left, p);
     }
 
     //levelUp(node)
@@ -125,7 +126,7 @@ int main(int argc, char *argv[])
 
     print(root);
 
-    /*
+
 
     qDebug() << "---------------------";
 
@@ -139,7 +140,7 @@ int main(int argc, char *argv[])
 
     insert(2, root2, root);
     print(root);
-*/
+
 
 
     return a.exec();
