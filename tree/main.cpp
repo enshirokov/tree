@@ -3,20 +3,21 @@
 
 #include <vector>
 #include <algorithm>
+#include <iostream>
 
 using namespace std;
 
-class Node
+struct Node
 {
 public:
-    Node (int left = 1, Node *parent = 0) : parent(parent)
+    Node (int left = 1, Node *parent = 0) : parent(parent), level(0)
     {
         this->left = left;
         right = this->left + 1;
 
-        level = 0;
 
-    };
+
+    }
 
     int level; // уровень (нужно только для вывода на экран)
     int left; // левое число
@@ -55,8 +56,8 @@ Node* find(int pos, Node *node)
 
 }
 
-// обновление дерева вниз от node исключая ветки меньшие чем branch
-int update(int branch, int num, Node *node)
+// обновление дерева вниз от node исключая ветки меньшие чем branchNumber
+int update(int branchNumber, int num, Node *node)
 {
 
     node->left = num;
@@ -70,8 +71,8 @@ int update(int branch, int num, Node *node)
 
             int forOther = (i == 0) ? (node->left + 1) : node->children[i - 1]->right + 1; // номер последовательнсти для потомка
 
-            if(i >= branch) {
-                // обновляем только нужные ветки (которые больше заданного ограничения branch)
+            if(i >= branchNumber) {
+                // обновляем только нужные ветки (которые больше заданного ограничения branchNumber)
                 // и берем значение right у крайней ветки
 
                 node->right = update(0, forOther, node->children[i]);
@@ -94,7 +95,7 @@ int update(int branch, int num, Node *node)
 }
 
 // поиск номера ветки в векторе потомков (можно заменить добавлением поля в структуру Node  сожержащую номер ветки)
-int findBranch(Node *node)
+int findBranchNumber(Node *node)
 {
     if(node->parent == 0)
         return -1;
@@ -111,11 +112,11 @@ void levelUp(int num, Node *node)
         return;
 
     // Пиоиск номера ветки (можно заменить добавлением поля в структуру Node  сожержащую номер ветки)
-    int branch = findBranch(node);
+    int branchNumber = findBranchNumber(node);
 
     Node *parent = node->parent;
 
-    update(branch, parent->left, parent); // обновляем ветки родительского узла (исключая уже измененные (т.е < branch))
+    update(branchNumber, parent->left, parent); // обновляем ветки родительского узла (исключая уже измененные (т.е < branchNumber))
 
     levelUp(parent->right, parent); // рекурсивно переходим на уровень вверх
 }
@@ -124,6 +125,9 @@ void levelUp(int num, Node *node)
 void insert(int pos, Node *node, Node *root)
 {
     Node *p = find(pos, root); // поиск места вставки
+
+    if(p == 0)
+        return;
 
     if(pos == p->left){
         // если место вставки найдено - дабавляем ветку node в потомки и обновляем ее полностью (рекурсивно)
@@ -135,9 +139,6 @@ void insert(int pos, Node *node, Node *root)
         levelUp(p->right, p); // поднимаемся на уровень выше, и обновляем все ветки справа (рекурсивно)
     }
 
-
-
-
 }
 
 // удаление ветки (перемещение в node) из parent на месте pos (включая узел с pos)
@@ -146,15 +147,15 @@ void remove(int pos, Node *node, Node *root)
     Node *p = find(pos, root); // поиск места удаления
 
     if(pos == p->left){
-        node = p;
+        node = p; // перемещаем узел и все его ветки в новый корень
 
         if(p->parent != 0) {
-            int branch = findBranch(p);
+            int branchNumber = findBranchNumber(p);
             int forOther = p->parent->left;
             Node *parent = p->parent;
 
-            parent->children.erase(find(parent->children.begin(), parent->children.end(), p));
-            update(branch, forOther, parent);
+            parent->children.erase(find(parent->children.begin(), parent->children.end(), p)); // удаляем узел и все го ветки
+            update(branchNumber, forOther, parent); // обновляем все ветки спава от удаленного узла
             levelUp(parent->right, parent); // поднимаемся на уровень выше, и обновляем все ветки справа (рекурсивно)
 
             update(0, 1, node); // обновляем новое дерево (часть старого)
@@ -196,7 +197,7 @@ int main(int argc, char *argv[])
 
     Tree::print(root);
 
-    qDebug() << "---------------------";
+    cout << "Root after insert ---------" << endl;
 
     Node *root2 = new Node;
     Tree::insert(1, new Node, root2);
@@ -204,7 +205,7 @@ int main(int argc, char *argv[])
 
     Tree::print(root2);
 
-    qDebug() << "---------------------";
+    cout << "Root2 after insert --------" << endl;
 
     Tree::insert(3, root2, root);
     Tree::print(root);
@@ -212,9 +213,9 @@ int main(int argc, char *argv[])
     Node *root3 = nullptr;
     Tree::remove(4, root2, root);
 
-    qDebug() << "Root ----------";
+    cout << "Root after remove ----------" << endl;
     Tree::print(root);
-    qDebug() << "Root2 ---------";
+    cout << "Root2 after remove ---------" << endl;
     Tree::print(root2);
 
 
