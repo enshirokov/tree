@@ -58,13 +58,17 @@ int update(int branch, int num, Node *node)
 {
 
     node->left = num;
-    //node->level = node->parent->level + 1;
+    node->level = (node->parent != 0) ? (node->parent->level + 1) : 0;
 
 
-    if(!node->children.empty() && branch < node->children.size()){
-        for (int i = branch; i < node->children.size(); i++) {
+    if(!node->children.empty()){
+        for (int i = 0; i < node->children.size(); i++) {
             int forOther = (i == 0) ? (node->left + 1) : node->children[i - 1]->right + 1;
-            node->right = update(0, forOther, node->children[i]);
+
+            if(i >= branch)
+                node->right = update(0, forOther, node->children[i]);
+            else
+                node->right = node->children[i]->right + 1;
         }
     }
     else
@@ -73,17 +77,19 @@ int update(int branch, int num, Node *node)
     return node->right + 1;
 }
 
-//int levelUp(int branch, int num, Node *node)
-//{
-//    Node *parent =  node->parent;
-//    auto iter = std::find(parent->children.begin(), parent->children.end(), node);
-//    iter++; // переходим к дургой ветке
+void levelUp(int num, Node *node)
+{
+    if(node->parent == 0)
+        return;
 
-//    for(; iter != parent->children.end(); iter++) {
-//        parent->right = update(0, num, *iter);
+    Node *parent =  node->parent;
+    auto iter = std::find(parent->children.begin(), parent->children.end(), node);
+    int branch = parent->children.end() - iter - 1; // переходим к дургой ветке
 
-//    }
-//}
+    update(branch, parent->left, parent);
+
+    levelUp(parent->right, parent);
+}
 
 void insert(int pos, Node *node, Node *parent)
 {
@@ -94,10 +100,10 @@ void insert(int pos, Node *node, Node *parent)
 
     if(pos == p->left){
         p->children.push_back(node);
-        update(0, p->left, p);
+        update(p->children.size() - 1, p->left, p);
     }
 
-    //levelUp(node)
+    levelUp(p->right, p);
 
 
 }
@@ -121,12 +127,11 @@ int main(int argc, char *argv[])
 
     Node *root = new Node;
     insert(1, new Node, root);
-    //insert(2, new Node, root);
+    insert(2, new Node, root);
+    insert(1, new Node, root);
     //insert(2, new Node, root);
 
     print(root);
-
-
 
     qDebug() << "---------------------";
 
@@ -138,10 +143,8 @@ int main(int argc, char *argv[])
 
     qDebug() << "---------------------";
 
-    insert(2, root2, root);
+    insert(3, root2, root);
     print(root);
-
-
 
     return a.exec();
 }
