@@ -9,7 +9,6 @@ using namespace std;
 
 struct Node
 {
-public:
     Node (int left = 1, Node *parent = 0) : parent(parent), level(0)
     {
         this->left = left;
